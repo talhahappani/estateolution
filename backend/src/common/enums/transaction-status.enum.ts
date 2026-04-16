@@ -1,0 +1,7 @@
+export enum TransactionStatus {
+  AGREEMENT = 'agreement',
+  EARNEST_MONEY = 'earnest_money',
+  TITLE_DEED = 'title_deed',
+  COMPLETED = 'completed',
+  CANCELLED = 'cancelled',
+}
