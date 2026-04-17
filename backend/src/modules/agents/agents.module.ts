@@ -1,14 +1,15 @@
 import { Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 import { Agent, AgentSchema } from './schemas/agent.schema';
+import { AgentsController } from './agents.controller';
+import { AgentsService } from './agents.service';
 
 @Module({
   imports: [
-    // Register the Agent schema with Mongoose
     MongooseModule.forFeature([{ name: Agent.name, schema: AgentSchema }]),
   ],
-  controllers: [],
-  providers: [],
+  controllers: [AgentsController],
+  providers: [AgentsService],
   exports: [MongooseModule],
 })
 export class AgentsModule {}

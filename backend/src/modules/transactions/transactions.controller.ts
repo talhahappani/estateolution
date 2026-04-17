@@ -18,8 +18,21 @@ export class TransactionsController {
     return this.transactionsService.findAll();
   }
 
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.transactionsService.findOne(id);
+  }
+
   @Patch(':id/stage')
   updateStage(@Param('id') id: string, @Body() updateStageDto: UpdateStageDto) {
-    return this.transactionsService.updateStage(id, updateStageDto);
+    return this.transactionsService.updateStage(id, updateStageDto.newStage);
+  }
+
+  @Patch(':id/cancel')
+  cancelTransaction(
+    @Param('id') id: string,
+    @Body() cancelDto: CancelTransactionDto,
+  ) {
+    return this.transactionsService.cancelTransaction(id, cancelDto.reason);
   }
 }
