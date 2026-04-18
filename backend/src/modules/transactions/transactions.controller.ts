@@ -18,6 +18,11 @@ export class TransactionsController {
     return this.transactionsService.findAll();
   }
 
+  @Get('stats')
+  getStats() {
+    return this.transactionsService.getStats();
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.transactionsService.findOne(id);

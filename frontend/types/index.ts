@@ -51,3 +51,10 @@ export interface Transaction {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface TransactionStats {
+  totalTransactions: number;
+  completedTransactions: number;
+  cancelledTransactions: number;
+  totalAgencyEarnings: number;
+}

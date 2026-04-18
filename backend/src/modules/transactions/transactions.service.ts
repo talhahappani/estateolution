@@ -126,4 +126,37 @@ export class TransactionsService {
 
     return transaction.save();
   }
+
+  async getStats() {
+    const totalTransactions = await this.transactionModel.countDocuments();
+
+    const completedTransactions = await this.transactionModel.countDocuments({
+      status: TransactionStatus.COMPLETED,
+    });
+
+    const cancelledTransactions = await this.transactionModel.countDocuments({
+      status: TransactionStatus.CANCELLED,
+    });
+
+    // Use MongoDB Aggregation to sum up all agency earnings from completed transactions
+    const earningsAggregation = await this.transactionModel.aggregate([
+      { $match: { status: TransactionStatus.COMPLETED } },
+      {
+        $group: {
+          _id: null,
+          totalEarnings: { $sum: '$financialBreakdown.agencyEarning' },
+        },
+      },
+    ]);
+
+    const totalAgencyEarnings =
+      earningsAggregation.length > 0 ? earningsAggregation[0].totalEarnings : 0;
+
+    return {
+      totalTransactions,
+      completedTransactions,
+      cancelledTransactions,
+      totalAgencyEarnings,
+    };
+  }
 }

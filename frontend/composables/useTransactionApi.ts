@@ -1,4 +1,4 @@
-import type { Transaction, TransactionStatus } from "../types"; // Using relative path
+import type { Transaction, TransactionStatus, TransactionStats } from "../types";
 
 export const useTransactionApi = () => {
   // @ts-ignore
@@ -33,10 +33,25 @@ export const useTransactionApi = () => {
     });
   };
 
+  // Create a new transaction
+  const createTransaction = async (data: any): Promise<Transaction> => {
+    return await $fetch<Transaction>("/transactions", {
+      method: "POST",
+      baseURL,
+      body: data,
+    });
+  };
+
+  const fetchStats = async (): Promise<TransactionStats> => {
+    return await $fetch<TransactionStats>("/transactions/stats", { baseURL });
+  };
+
   return {
     fetchTransactions,
     fetchTransactionById,
     updateTransactionStage,
     cancelTransaction,
+    createTransaction,
+    fetchStats,
   };
 };

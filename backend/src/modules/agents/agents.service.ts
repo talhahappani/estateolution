@@ -21,6 +21,10 @@ export class AgentsService {
     }
   }
 
+  async delete(id: string): Promise<void> {
+    await this.agentModel.findByIdAndDelete(id).exec();
+  }
+
   async findAll(): Promise<Agent[]> {
     return this.agentModel.find().exec();
   }

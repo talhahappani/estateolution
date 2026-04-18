@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Delete } from '@nestjs/common';
 import { AgentsService } from './agents.service';
 import { CreateAgentDto } from './dto/create-agent.dto';
 
@@ -14,5 +14,10 @@ export class AgentsController {
   @Get()
   findAll() {
     return this.agentsService.findAll();
+  }
+
+  @Delete(':id')
+  delete(@Param('id') id: string) {
+    return this.agentsService.delete(id);
   }
 }
