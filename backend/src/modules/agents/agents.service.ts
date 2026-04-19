@@ -12,9 +12,9 @@ export class AgentsService {
     try {
       const newAgent = new this.agentModel(createAgentDto);
       return await newAgent.save();
-    } catch (error) {
+    } catch (error: unknown) {
       // Handle MongoDB duplicate key error for unique email
-      if (error.code === 11000) {
+      if ((error as { code?: number }).code === 11000) {
         throw new ConflictException('An agent with this email already exists.');
       }
       throw error;

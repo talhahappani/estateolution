@@ -8,10 +8,12 @@ export const useTransactionStore = defineStore("transaction", () => {
 
   // State
   const transactions = ref<Transaction[]>([]);
+  const paginationMeta = ref({ page: 1, totalPages: 1, total: 0 });
   const selectedTransaction = ref<Transaction | null>(null);
   const isLoading = ref<boolean>(false);
   const error = ref<string | null>(null);
   const stats = ref<TransactionStats | null>(null);
+  const agentPerformance = ref<any[]>([]);
 
   // Actions
   const loadStats = async () => {
@@ -22,11 +24,25 @@ export const useTransactionStore = defineStore("transaction", () => {
     }
   };
 
-  const loadTransactions = async () => {
+  const loadAgentPerformance = async () => {
+    try {
+      agentPerformance.value = await api.fetchAgentPerformance();
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const loadTransactions = async (page: number = 1) => {
     isLoading.value = true;
     error.value = null;
     try {
-      transactions.value = await api.fetchTransactions();
+      const response = await api.fetchTransactions(page, 10);
+      transactions.value = response.data;
+      paginationMeta.value = {
+        page: response.page,
+        totalPages: response.totalPages,
+        total: response.total,
+      };
       await loadStats();
     } catch (err: any) {
       error.value = err.data?.message || "Failed to fetch transactions.";
@@ -80,12 +96,15 @@ export const useTransactionStore = defineStore("transaction", () => {
 
   return {
     transactions,
+    paginationMeta,
     selectedTransaction,
     stats,
+    agentPerformance,
     isLoading,
     error,
     loadTransactions,
     loadTransactionById,
+    loadAgentPerformance,
     changeStage,
     createNewTransaction,
     cancelTx,

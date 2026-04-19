@@ -3,18 +3,18 @@ import { TransactionType } from '../../../common/enums/transaction-type.enum';
 
 export class CreateTransactionDto {
   @IsString()
-  propertyTitle: string;
+  propertyTitle!: string;
 
   @IsEnum(TransactionType)
-  transactionType: TransactionType;
+  transactionType!: TransactionType;
 
   @IsNumber()
   @Min(0)
-  totalServiceFee: number;
+  totalServiceFee!: number;
 
   @IsMongoId()
-  listingAgentId: string;
+  listingAgentId!: string;
 
   @IsMongoId()
-  sellingAgentId: string;
+  sellingAgentId!: string;
 }

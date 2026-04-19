@@ -1,13 +1,12 @@
-import type { Transaction, TransactionStatus, TransactionStats } from "../types";
+import type { Transaction, TransactionStatus, TransactionStats, PaginatedTransactions } from "../types";
 
 export const useTransactionApi = () => {
-  // @ts-ignore
   const config = useRuntimeConfig();
   const baseURL = config.public.apiBase;
 
   // Fetch all transactions
-  const fetchTransactions = async (): Promise<Transaction[]> => {
-    return await $fetch<Transaction[]>("/transactions", { baseURL });
+  const fetchTransactions = async (page: number = 1, limit: number = 10): Promise<PaginatedTransactions> => {
+    return await $fetch<PaginatedTransactions>(`/transactions?page=${page}&limit=${limit}`, { baseURL });
   };
 
   // Fetch a single transaction by ID
@@ -46,6 +45,10 @@ export const useTransactionApi = () => {
     return await $fetch<TransactionStats>("/transactions/stats", { baseURL });
   };
 
+  const fetchAgentPerformance = async (): Promise<any[]> => {
+    return await $fetch<any[]>("/transactions/agent-performance", { baseURL });
+  };
+
   return {
     fetchTransactions,
     fetchTransactionById,
@@ -53,5 +56,6 @@ export const useTransactionApi = () => {
     cancelTransaction,
     createTransaction,
     fetchStats,
+    fetchAgentPerformance,
   };
 };

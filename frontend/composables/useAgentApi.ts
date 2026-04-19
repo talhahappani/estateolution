@@ -1,7 +1,6 @@
 import type { Agent } from "../types";
 
 export const useAgentApi = () => {
-  // @ts-ignore
   const config = useRuntimeConfig();
   const baseURL = config.public.apiBase;
 

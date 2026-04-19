@@ -1,72 +1,67 @@
 <template>
   <div v-if="store.isLoading && !transaction" class="text-center py-20">
-    <p class="text-gray-500 animate-pulse">Loading transaction details...</p>
+    <p class="animate-pulse transition-colors text-slate-500 dark:text-slate-400">Loading transaction details...</p>
   </div>
 
   <div v-else-if="transaction" class="max-w-5xl mx-auto space-y-6">
     <!-- Header Section -->
-    <div class="flex items-center justify-between bg-white p-6 rounded-lg shadow border border-gray-200">
+    <div class="p-6 rounded-lg shadow-sm border flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 transition-colors bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800">
       <div>
-        <NuxtLink to="/" class="text-sm text-indigo-600 hover:underline mb-2 inline-block">&larr; Back to Dashboard</NuxtLink>
-        <h2 class="text-2xl font-bold text-gray-900">{{ transaction.propertyTitle }}</h2>
-        <p class="text-gray-500 text-sm mt-1">Total Fee: ${{ transaction.totalServiceFee.toLocaleString() }}</p>
+        <NuxtLink to="/" class="text-sm hover:underline mb-2 inline-block transition-colors text-teal-600 dark:text-teal-400"> &larr; Back to Dashboard </NuxtLink>
+        <h2 class="text-2xl font-bold transition-colors text-slate-900 dark:text-slate-100">{{ transaction.propertyTitle }}</h2>
+        <p class="text-sm mt-1 transition-colors text-slate-500 dark:text-slate-400">Total Fee: {{ transaction.totalServiceFee.toLocaleString("en-GB", { style: "currency", currency: "GBP" }) }}</p>
       </div>
       <div class="text-right">
-        <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full uppercase tracking-wide" :class="getStatusBadgeClass(transaction.status)">
-          {{ formatStage(transaction.status) }}
-        </span>
+        <span class="px-3 py-1 inline-flex text-sm leading-5 font-semibold rounded-full uppercase tracking-wide" :class="getStatusBadgeClass(transaction.status)"> {{ formatStage(transaction.status) }} </span>
       </div>
     </div>
 
     <!-- State Machine & Cancellation Controls -->
-    <div class="bg-white p-6 rounded-lg shadow border border-gray-200">
+    <div class="p-6 rounded-lg shadow-sm border transition-colors bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800">
       <div class="flex justify-between items-start mb-4">
-        <h3 class="text-lg font-semibold text-gray-900">Transaction Stage</h3>
+        <h3 class="text-lg font-semibold transition-colors text-slate-900 dark:text-slate-100">Transaction Stage</h3>
 
-        <!-- Cancel Button (Only show if not completed and not cancelled) -->
-        <button v-if="transaction.status !== TransactionStatus.COMPLETED && transaction.status !== TransactionStatus.CANCELLED && !isCancelling" @click="isCancelling = true" class="text-sm text-red-600 border border-red-200 hover:bg-red-50 px-3 py-1 rounded transition">Cancel Transaction</button>
+        <button v-if="transaction.status !== TransactionStatus.COMPLETED && transaction.status !== TransactionStatus.CANCELLED && !isCancelling" @click="isCancelling = true" class="text-sm px-3 py-1 rounded border transition-colors text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-900/20">Cancel Transaction</button>
       </div>
 
       <!-- Cancellation Form -->
-      <div v-if="isCancelling" class="bg-red-50 p-4 rounded-md border border-red-200 mb-4">
-        <label class="block text-sm font-medium text-red-800 mb-2">Reason for cancellation:</label>
+      <div v-if="isCancelling" class="p-4 rounded-md border mb-4 transition-colors bg-red-50 border-red-200 dark:bg-red-900/10 dark:border-red-900/30">
+        <label class="block text-sm font-medium mb-2 transition-colors text-red-800 dark:text-red-400">Reason for cancellation:</label>
         <div class="flex space-x-2">
-          <input v-model="cancelReason" type="text" placeholder="e.g., Client withdrew offer" class="flex-1 rounded-md border-red-300 shadow-sm focus:border-red-500 focus:ring-red-500 sm:text-sm p-2 border" />
-          <button @click="handleCancel" :disabled="!cancelReason || store.isLoading" class="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 disabled:opacity-50">Confirm</button>
-          <button @click="isCancelling = false" class="bg-white text-gray-600 border border-gray-300 px-4 py-2 rounded-md hover:bg-gray-50">Abort</button>
+          <input v-model="cancelReason" type="text" placeholder="e.g., Client withdrew offer" class="flex-1 rounded-md shadow-sm sm:text-sm p-2 border transition-colors border-red-300 focus:border-red-500 focus:ring-red-500 dark:bg-slate-950 dark:border-red-900/50 dark:text-slate-100 dark:placeholder-slate-500" />
+          <button @click="handleCancel" :disabled="!cancelReason || store.isLoading" class="px-4 py-2 rounded-md transition-colors text-white bg-red-600 hover:bg-red-700 disabled:opacity-50 dark:bg-red-500 dark:hover:bg-red-600">Confirm</button>
+          <button @click="isCancelling = false" class="px-4 py-2 rounded-md border transition-colors bg-white text-slate-600 border-slate-300 hover:bg-slate-50 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700 dark:hover:bg-slate-700">Abort</button>
         </div>
       </div>
 
       <!-- State Messages -->
-      <div v-if="transaction.status === TransactionStatus.COMPLETED" class="bg-green-50 text-green-700 p-4 rounded-md border border-green-200">This transaction has been successfully completed. No further stage changes are allowed.</div>
+      <div v-if="transaction.status === TransactionStatus.COMPLETED" class="p-4 rounded-md border transition-colors bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-900/10 dark:text-teal-400 dark:border-teal-900/30">This transaction has been successfully completed. No further stage changes are allowed.</div>
 
-      <div v-else-if="transaction.status === TransactionStatus.CANCELLED" class="bg-red-50 text-red-700 p-4 rounded-md border border-red-200">
+      <div v-else-if="transaction.status === TransactionStatus.CANCELLED" class="p-4 rounded-md border transition-colors bg-red-50 text-red-700 border-red-200 dark:bg-red-900/10 dark:text-red-400 dark:border-red-900/30">
         <p class="font-semibold">This transaction was cancelled.</p>
         <p class="text-sm mt-1">Reason: {{ transaction.cancellationReason }}</p>
       </div>
 
       <!-- Next Stage Button -->
       <div v-else-if="!isCancelling" class="flex items-center space-x-4">
-        <p class="text-gray-600">Next allowed stage:</p>
-        <button v-if="nextAllowedStage" @click="handleStageChange(nextAllowedStage)" :disabled="store.isLoading" class="bg-indigo-600 text-white px-6 py-2 rounded-md hover:bg-indigo-700 transition disabled:opacity-50">
+        <p class="transition-colors text-slate-600 dark:text-slate-400">Next allowed stage:</p>
+        <button v-if="nextAllowedStage" @click="handleStageChange(nextAllowedStage)" :disabled="store.isLoading" class="px-6 py-2 rounded-md transition-colors text-white bg-teal-600 hover:bg-teal-700 disabled:opacity-50 dark:bg-teal-500 dark:hover:bg-teal-600">
           {{ store.isLoading ? "Processing..." : `Move to ${formatStage(nextAllowedStage)}` }}
         </button>
       </div>
     </div>
 
     <!-- Traceability Timeline Section -->
-    <div class="bg-white p-6 rounded-lg shadow border border-gray-200">
-      <h3 class="text-lg font-semibold text-gray-900 mb-4">Stage History</h3>
+    <div class="p-6 rounded-lg shadow-sm border transition-colors bg-white border-slate-200 dark:bg-slate-900 dark:border-slate-800">
+      <h3 class="text-lg font-semibold mb-4 transition-colors text-slate-900 dark:text-slate-100">Stage History</h3>
       <div class="flow-root">
         <ul role="list" class="-mb-8">
           <li v-for="(history, index) in transaction.stageHistory" :key="index">
             <div class="relative pb-8">
-              <!-- Connector Line -->
-              <span v-if="index !== transaction.stageHistory.length - 1" class="absolute top-4 left-4 -ml-px h-full w-0.5 bg-gray-200" aria-hidden="true"></span>
+              <span v-if="index !== transaction.stageHistory.length - 1" class="absolute top-4 left-4 -ml-px h-full w-0.5 transition-colors bg-slate-200 dark:bg-slate-700" aria-hidden="true"></span>
               <div class="relative flex space-x-3">
                 <div>
-                  <span class="h-8 w-8 rounded-full flex items-center justify-center ring-8 ring-white" :class="history.stage === TransactionStatus.CANCELLED ? 'bg-red-500' : 'bg-indigo-500'">
-                    <!-- Icon based on status -->
+                  <span class="h-8 w-8 rounded-full flex items-center justify-center ring-8 transition-colors ring-white dark:ring-slate-900" :class="history.stage === TransactionStatus.CANCELLED ? 'bg-red-500' : 'bg-teal-500'">
                     <svg v-if="history.stage === TransactionStatus.COMPLETED" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
                     <svg v-else-if="history.stage === TransactionStatus.CANCELLED" class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                     <span v-else class="h-2.5 w-2.5 bg-white rounded-full"></span>
@@ -74,11 +69,11 @@
                 </div>
                 <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
                   <div>
-                    <p class="text-sm text-gray-500">
-                      Transitioned to <span class="font-medium text-gray-900">{{ formatStage(history.stage) }}</span>
+                    <p class="text-sm transition-colors text-slate-500 dark:text-slate-400">
+                      Transitioned to <span class="font-medium transition-colors text-slate-900 dark:text-slate-100">{{ formatStage(history.stage) }}</span>
                     </p>
                   </div>
-                  <div class="text-right text-sm whitespace-nowrap text-gray-500">
+                  <div class="text-right text-sm whitespace-nowrap transition-colors text-slate-500 dark:text-slate-500">
                     <time :datetime="history.enteredAt">{{ new Date(history.enteredAt).toLocaleString() }}</time>
                   </div>
                 </div>
@@ -89,21 +84,24 @@
       </div>
     </div>
 
-    <!-- Financial Breakdown (Only visible if COMPLETED) -->
-    <div v-if="transaction.status === TransactionStatus.COMPLETED && transaction.financialBreakdown" class="bg-white p-6 rounded-lg shadow border border-green-200">
-      <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center"><span class="text-green-600 mr-2">💰</span> Financial Breakdown</h3>
+    <!-- Financial Breakdown -->
+    <div v-if="transaction.status === TransactionStatus.COMPLETED && transaction.financialBreakdown" class="p-6 rounded-lg shadow-sm border transition-colors bg-white border-teal-200 dark:bg-slate-900 dark:border-teal-900/50">
+      <h3 class="text-lg font-semibold mb-4 flex items-center transition-colors text-slate-900 dark:text-slate-100"><span class="mr-2">💰</span> Financial Breakdown</h3>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="bg-gray-50 p-4 rounded-md border border-gray-200">
-          <p class="text-sm text-gray-500 uppercase tracking-wider">Agency Earning</p>
-          <p class="text-3xl font-bold text-gray-900 mt-1">${{ transaction.financialBreakdown.agencyEarning.toLocaleString() }}</p>
+        <div class="p-4 rounded-md border transition-colors bg-slate-50 border-slate-200 dark:bg-slate-800/50 dark:border-slate-700">
+          <p class="text-sm uppercase tracking-wider transition-colors text-slate-500 dark:text-slate-400">Agency Earning</p>
+          <p class="text-3xl font-bold mt-1 transition-colors text-slate-900 dark:text-slate-100">{{ transaction.financialBreakdown.agencyEarning.toLocaleString("en-GB", { style: "currency", currency: "GBP" }) }}</p>
         </div>
-        <div class="bg-gray-50 p-4 rounded-md border border-gray-200 space-y-4">
-          <p class="text-sm text-gray-500 uppercase tracking-wider">Agent Earnings</p>
-          <div v-for="(agent, index) in transaction.financialBreakdown.agents" :key="index" class="flex justify-between items-center border-b border-gray-200 pb-2 last:border-0 last:pb-0">
+        <div class="p-4 rounded-md border space-y-4 transition-colors bg-slate-50 border-slate-200 dark:bg-slate-800/50 dark:border-slate-700">
+          <p class="text-sm uppercase tracking-wider transition-colors text-slate-500 dark:text-slate-400">Agent Earnings</p>
+          <div v-for="(agent, index) in transaction.financialBreakdown.agents" :key="index" class="flex justify-between items-center border-b pb-2 last:border-0 last:pb-0 transition-colors border-slate-200 dark:border-slate-700">
             <div>
-              <p class="font-medium text-gray-900 capitalize">{{ agent.role }} Agent</p>
+              <p class="font-medium transition-colors text-slate-900 dark:text-slate-100">
+                {{ agent.agentId === transaction.listingAgentId._id ? `${transaction.listingAgentId.firstName} ${transaction.listingAgentId.lastName}` : `${transaction.sellingAgentId.firstName} ${transaction.sellingAgentId.lastName}` }}
+              </p>
+              <p class="text-xs capitalize transition-colors text-slate-500 dark:text-slate-400">{{ agent.role }} Agent</p>
             </div>
-            <p class="text-xl font-bold text-indigo-600">${{ agent.earning.toLocaleString() }}</p>
+            <p class="text-xl font-bold transition-colors text-teal-600 dark:text-teal-400">{{ agent.earning.toLocaleString("en-GB", { style: "currency", currency: "GBP" }) }}</p>
           </div>
         </div>
       </div>

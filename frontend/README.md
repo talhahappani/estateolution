@@ -1,75 +1,46 @@
-# Nuxt Minimal Starter
+# estateolution - Frontend Client
 
-Look at the [Nuxt documentation](https://nuxt.com/docs/getting-started/introduction) to learn more.
+## Overview
 
-## Setup
+This is the user interface for the estateolution system. Built with Nuxt 3, it provides a modern, responsive dashboard to manage real estate deals, track state transitions, view automated financial breakdowns, and monitor agent performance via analytical tables.
 
-Make sure to install dependencies:
+## Tech Stack
+
+- Framework: Nuxt 3 (Vue 3, Composition API)
+- State Management: Pinia
+- Styling: Tailwind CSS
+- Theming: Nuxt Color Mode (Dark/Light mode support)
+
+## Prerequisites
+
+- Node.js (v18 or higher recommended)
+- The estateolution Backend API must be running.
+
+## Installation
+
+1. Navigate to the frontend directory and install dependencies:
 
 ```bash
-# npm
 npm install
-
-# pnpm
-pnpm install
-
-# yarn
-yarn install
-
-# bun
-bun install
 ```
 
-## Development Server
+2. Environment Configuration (Optional):
+   By default, the application expects the backend API to be running on `http://localhost:3000`. If your backend is hosted elsewhere, create a `.env` file in the `frontend` directory:
 
-Start the development server on `http://localhost:3000`:
+```env
+NUXT_PUBLIC_API_BASE=https://your-live-backend-url.com
+```
+
+## Running the Application
+
+To start the development server:
 
 ```bash
-# npm
 npm run dev
-
-# pnpm
-pnpm dev
-
-# yarn
-yarn dev
-
-# bun
-bun run dev
 ```
 
-## Production
+The application will be accessible at `http://localhost:3001`. (Port 3001 is explicitly configured in `nuxt.config.ts` to prevent port conflicts with the backend).
 
-Build the application for production:
-
-```bash
-# npm
-npm run build
-
-# pnpm
-pnpm build
-
-# yarn
-yarn build
-
-# bun
-bun run build
 ```
 
-Locally preview production build:
-
-```bash
-# npm
-npm run preview
-
-# pnpm
-pnpm preview
-
-# yarn
-yarn preview
-
-# bun
-bun run preview
 ```
-
-Check out the [deployment documentation](https://nuxt.com/docs/getting-started/deployment) for more information.

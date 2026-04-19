@@ -58,3 +58,11 @@ export interface TransactionStats {
   cancelledTransactions: number;
   totalAgencyEarnings: number;
 }
+
+export interface PaginatedTransactions {
+  data: Transaction[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}

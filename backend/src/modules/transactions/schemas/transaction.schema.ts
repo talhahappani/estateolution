@@ -7,70 +7,70 @@ import { TransactionType } from '../../../common/enums/transaction-type.enum';
 @Schema({ _id: false })
 export class StageHistory {
   @Prop({ type: String, enum: TransactionStatus, required: true })
-  stage: string;
+  stage!: string;
 
   @Prop({ default: Date.now })
-  enteredAt: Date;
+  enteredAt!: Date;
 }
 
 // Sub-schema: Agent earnings inside financial breakdown
 @Schema({ _id: false })
 export class AgentEarning {
   @Prop({ type: Types.ObjectId, ref: 'Agent', required: true })
-  agentId: Types.ObjectId;
+  agentId!: Types.ObjectId;
 
   @Prop({ required: true, enum: ['listing', 'selling', 'both'] })
-  role: string;
+  role!: string;
 
   @Prop({ required: true })
-  earning: number;
+  earning!: number;
 }
 
 // Sub-schema: Financial Breakdown (Embedded Document)
 @Schema({ _id: false })
 export class FinancialBreakdown {
   @Prop({ required: true })
-  agencyEarning: number;
+  agencyEarning!: number;
 
   @Prop({ type: [AgentEarning], required: true })
-  agents: AgentEarning[];
+  agents!: AgentEarning[];
 }
 
 @Schema({ timestamps: true })
 export class Transaction extends Document {
   @Prop({ required: true })
-  propertyTitle: string;
+  propertyTitle!: string;
 
   @Prop({ type: String, enum: TransactionType, required: true })
-  transactionType: string;
+  transactionType!: string;
 
   @Prop({ required: true, min: 0 })
-  totalServiceFee: number;
+  totalServiceFee!: number;
 
   @Prop({ type: Types.ObjectId, ref: 'Agent', required: true })
-  listingAgentId: Types.ObjectId;
+  listingAgentId!: Types.ObjectId;
 
   @Prop({ type: Types.ObjectId, ref: 'Agent', required: true })
-  sellingAgentId: Types.ObjectId;
+  sellingAgentId!: Types.ObjectId;
 
   @Prop({
     type: String,
     enum: TransactionStatus,
     default: TransactionStatus.AGREEMENT,
   })
-  status: string;
+  status!: string;
 
   @Prop({ type: [StageHistory], default: [] })
-  stageHistory: StageHistory[];
+  stageHistory!: StageHistory[];
 
   @Prop({ type: String, default: null })
-  cancellationReason: string;
+  cancellationReason!: string;
 
   @Prop({ type: Date, default: null })
-  cancelledAt: Date;
+  cancelledAt!: Date;
 
   @Prop({ type: FinancialBreakdown, default: null })
-  financialBreakdown: FinancialBreakdown;
+  financialBreakdown!: FinancialBreakdown;
 }
 
 export const TransactionSchema = SchemaFactory.createForClass(Transaction);

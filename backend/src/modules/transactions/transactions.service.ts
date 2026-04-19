@@ -13,7 +13,9 @@ import { CommissionsService } from '../commissions/commissions.service';
 @Injectable()
 export class TransactionsService {
   // STRICT LINEAR TRANSITION RULES
-  private readonly validTransitions = {
+  private readonly validTransitions: Partial<
+    Record<TransactionStatus, TransactionStatus[]>
+  > = {
     [TransactionStatus.AGREEMENT]: [TransactionStatus.EARNEST_MONEY],
     [TransactionStatus.EARNEST_MONEY]: [TransactionStatus.TITLE_DEED],
     [TransactionStatus.TITLE_DEED]: [TransactionStatus.COMPLETED],
@@ -39,11 +41,26 @@ export class TransactionsService {
     return newTransaction.save();
   }
 
-  async findAll(): Promise<Transaction[]> {
-    return this.transactionModel
+  async findAll(page: number = 1, limit: number = 10) {
+    const skip = (page - 1) * limit;
+
+    const data = await this.transactionModel
       .find()
       .populate('listingAgentId sellingAgentId')
+      .sort({ updatedAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .exec();
+
+    const total = await this.transactionModel.countDocuments();
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
+    };
   }
 
   async findOne(id: string): Promise<Transaction> {
@@ -63,14 +80,18 @@ export class TransactionsService {
     const transaction = await this.findOne(id);
 
     // Guard: Cannot transition a cancelled transaction
-    if (transaction.status === TransactionStatus.CANCELLED) {
+    if (
+      (transaction.status as TransactionStatus) === TransactionStatus.CANCELLED
+    ) {
       throw new BadRequestException(
         'Cannot change stage of a cancelled transaction.',
       );
     }
 
     // Guard: Cannot transition a completed transaction
-    if (transaction.status === TransactionStatus.COMPLETED) {
+    if (
+      (transaction.status as TransactionStatus) === TransactionStatus.COMPLETED
+    ) {
       throw new BadRequestException('Transaction is already completed.');
     }
 
@@ -85,10 +106,15 @@ export class TransactionsService {
 
     // If moving to COMPLETED, calculate and embed the financial breakdown
     if (newStage === TransactionStatus.COMPLETED) {
+      const listingId = (transaction.listingAgentId as { _id: Types.ObjectId })
+        ._id;
+      const sellingId = (transaction.sellingAgentId as { _id: Types.ObjectId })
+        ._id;
+
       const breakdown = this.commissionsService.calculateCommission(
         transaction.totalServiceFee,
-        transaction.listingAgentId._id as Types.ObjectId, // Asserting type since it might be populated
-        transaction.sellingAgentId._id as Types.ObjectId,
+        listingId,
+        sellingId,
       );
       transaction.financialBreakdown = breakdown;
     }
@@ -107,8 +133,9 @@ export class TransactionsService {
     const transaction = await this.findOne(id);
 
     if (
-      transaction.status === TransactionStatus.COMPLETED ||
-      transaction.status === TransactionStatus.CANCELLED
+      (transaction.status as TransactionStatus) ===
+        TransactionStatus.COMPLETED ||
+      (transaction.status as TransactionStatus) === TransactionStatus.CANCELLED
     ) {
       throw new BadRequestException(
         'Cannot cancel a completed or already cancelled transaction.',
@@ -149,8 +176,10 @@ export class TransactionsService {
       },
     ]);
 
-    const totalAgencyEarnings =
-      earningsAggregation.length > 0 ? earningsAggregation[0].totalEarnings : 0;
+    const totalAgencyEarnings: number =
+      earningsAggregation.length > 0
+        ? (earningsAggregation[0] as { totalEarnings: number }).totalEarnings
+        : 0;
 
     return {
       totalTransactions,
@@ -158,5 +187,47 @@ export class TransactionsService {
       cancelledTransactions,
       totalAgencyEarnings,
     };
+  }
+
+  // Get Agent Performance using MongoDB Aggregation
+  async getAgentPerformance() {
+    return this.transactionModel.aggregate([
+      { $match: { status: TransactionStatus.COMPLETED } },
+
+      { $unwind: '$financialBreakdown.agents' },
+
+      {
+        $group: {
+          _id: '$financialBreakdown.agents.agentId',
+          totalEarnings: { $sum: '$financialBreakdown.agents.earning' },
+          completedDeals: { $sum: 1 },
+        },
+      },
+
+      {
+        $lookup: {
+          from: 'agents',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'agentInfo',
+        },
+      },
+
+      { $unwind: '$agentInfo' },
+
+      {
+        $project: {
+          _id: 0,
+          agentId: '$_id',
+          agentName: {
+            $concat: ['$agentInfo.firstName', ' ', '$agentInfo.lastName'],
+          },
+          totalEarnings: 1,
+          completedDeals: 1,
+        },
+      },
+
+      { $sort: { totalEarnings: -1 } },
+    ]);
   }
 }

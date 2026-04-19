@@ -12,7 +12,9 @@ describe('TransactionsService', () => {
   let commissionsService: CommissionsService;
 
   // We create a mock function for saving the document
-  const mockSave = jest.fn().mockImplementation(function () {
+  const mockSave = jest.fn().mockImplementation(function (
+    this: typeof mockTransactionDoc,
+  ) {
     return Promise.resolve(this);
   });
 
@@ -95,6 +97,7 @@ describe('TransactionsService', () => {
       );
 
       expect(result.status).toBe(TransactionStatus.COMPLETED);
+      // eslint-disable-next-line @typescript-eslint/unbound-method
       expect(commissionsService.calculateCommission).toHaveBeenCalled();
       expect(result['financialBreakdown']).toBeDefined();
     });
