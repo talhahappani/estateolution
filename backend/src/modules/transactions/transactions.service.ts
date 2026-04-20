@@ -239,6 +239,7 @@ export class TransactionsService {
           agentName: {
             $concat: ['$agentInfo.firstName', ' ', '$agentInfo.lastName'],
           },
+          isActive: '$agentInfo.isActive',
           totalEarnings: 1,
           completedDeals: 1,
         },

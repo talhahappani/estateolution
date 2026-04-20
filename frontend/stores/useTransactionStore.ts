@@ -60,6 +60,7 @@ export const useTransactionStore = defineStore("transaction", () => {
   const loadTransactionById = async (id: string) => {
     isLoading.value = true;
     error.value = null;
+    selectedTransaction.value = null;
     try {
       selectedTransaction.value = await api.fetchTransactionById(id);
     } catch (err: any) {
@@ -67,6 +68,10 @@ export const useTransactionStore = defineStore("transaction", () => {
     } finally {
       isLoading.value = false;
     }
+  };
+
+  const clearSelectedTransaction = () => {
+    selectedTransaction.value = null;
   };
 
   const changeStage = async (id: string, newStage: TransactionStatus) => {
@@ -117,5 +122,6 @@ export const useTransactionStore = defineStore("transaction", () => {
     createNewTransaction,
     cancelTx,
     applyFilters,
+    clearSelectedTransaction,
   };
 });

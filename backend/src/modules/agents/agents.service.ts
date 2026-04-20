@@ -1,12 +1,21 @@
-import { ConflictException, Injectable } from '@nestjs/common';
+import {
+  ConflictException,
+  BadRequestException,
+  Injectable,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { Agent } from './schemas/agent.schema';
 import { CreateAgentDto } from './dto/create-agent.dto';
+import { Transaction } from '../transactions/schemas/transaction.schema';
+import { TransactionStatus } from '../../common/enums/transaction-status.enum';
 
 @Injectable()
 export class AgentsService {
-  constructor(@InjectModel(Agent.name) private agentModel: Model<Agent>) {}
+  constructor(
+    @InjectModel(Agent.name) private agentModel: Model<Agent>,
+    @InjectModel(Transaction.name) private transactionModel: Model<Transaction>,
+  ) {}
 
   async create(createAgentDto: CreateAgentDto): Promise<Agent> {
     try {
@@ -21,11 +30,26 @@ export class AgentsService {
     }
   }
 
-  async delete(id: string): Promise<void> {
-    await this.agentModel.findByIdAndDelete(id).exec();
+  async findAll(): Promise<Agent[]> {
+    return this.agentModel.find({ isActive: true }).exec();
   }
 
-  async findAll(): Promise<Agent[]> {
-    return this.agentModel.find().exec();
+  async delete(id: string): Promise<void> {
+    // 1. Check for active transactions tied to this agent
+    const activeTransaction = await this.transactionModel.findOne({
+      $or: [{ listingAgentId: id }, { sellingAgentId: id }],
+      status: {
+        $nin: [TransactionStatus.COMPLETED, TransactionStatus.CANCELLED],
+      },
+    });
+
+    if (activeTransaction) {
+      throw new BadRequestException(
+        'Cannot delete agent: They are assigned to an active transaction. Please complete or cancel the transaction first.',
+      );
+    }
+
+    // 2. Proceed with Soft Delete
+    await this.agentModel.findByIdAndUpdate(id, { isActive: false }).exec();
   }
 }

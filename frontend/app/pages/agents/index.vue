@@ -66,6 +66,7 @@
       <div v-for="(perf, index) in txStore.agentPerformance" :key="index" class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
         <div class="font-medium text-slate-900 dark:text-slate-100">
           {{ perf.agentName }}
+          <span v-if="perf.isActive === false" class="ml-2 text-xs font-semibold text-red-500 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded-full"> (Deleted) </span>
         </div>
 
         <div class="mt-3 flex items-center justify-between text-sm">
@@ -104,6 +105,7 @@
             <tr v-for="(perf, index) in txStore.agentPerformance" :key="index" class="transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50">
               <td class="px-6 py-4 whitespace-nowrap font-medium transition-colors text-slate-900 dark:text-slate-100">
                 {{ perf.agentName }}
+                <span v-if="perf.isActive === false" class="ml-2 text-xs font-semibold text-red-500 bg-red-100 dark:bg-red-900/30 px-2 py-0.5 rounded-full"> (Deleted) </span>
               </td>
               <td class="px-6 py-4 whitespace-nowrap text-center transition-colors text-slate-600 dark:text-slate-300">
                 <span class="bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400 py-1 px-3 rounded-full text-xs font-bold">
@@ -149,9 +151,11 @@ const confirmDelete = async (id: string) => {
   try {
     await store.removeAgent(id);
     agentToDelete.value = null;
-    toast.success("Agent permanently deleted.");
-  } catch {
-    toast.error("Failed to delete agent. It might be tied to a transaction.");
+    toast.success("Agent deleted successfully.");
+    await txStore.loadAgentPerformance();
+  } catch (error: any) {
+    const msg = error?.data?.message || "Failed to delete agent.";
+    toast.error(Array.isArray(msg) ? msg[0] : msg, { autoClose: 5000 });
     agentToDelete.value = null;
   }
 };

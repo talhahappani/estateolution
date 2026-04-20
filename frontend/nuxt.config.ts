@@ -12,6 +12,7 @@ export default defineNuxtConfig({
   modules: ["@pinia/nuxt", "@nuxtjs/tailwindcss", "@nuxtjs/color-mode"],
   colorMode: {
     classSuffix: "",
+    preference: "light",
   },
   runtimeConfig: {
     public: {

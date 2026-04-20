@@ -96,8 +96,10 @@
           <p class="text-sm uppercase tracking-wider transition-colors text-slate-500 dark:text-slate-400">Agent Earnings</p>
           <div v-for="(agent, index) in transaction.financialBreakdown.agents" :key="index" class="flex justify-between items-center border-b pb-2 last:border-0 last:pb-0 transition-colors border-slate-200 dark:border-slate-700">
             <div>
-              <p class="font-medium transition-colors text-slate-900 dark:text-slate-100">
-                {{ agent.agentId === transaction.listingAgentId._id ? `${transaction.listingAgentId.firstName} ${transaction.listingAgentId.lastName}` : `${transaction.sellingAgentId.firstName} ${transaction.sellingAgentId.lastName}` }}
+              <p class="font-medium transition-colors flex items-center text-slate-900 dark:text-slate-100">
+                {{ agent.agentId === transaction.listingAgentId?._id ? `${transaction.listingAgentId?.firstName} ${transaction.listingAgentId?.lastName}` : agent.agentId === transaction.sellingAgentId?._id ? `${transaction.sellingAgentId?.firstName} ${transaction.sellingAgentId?.lastName}` : "Unknown Agent" }}
+
+                <span v-if="(agent.agentId === transaction.listingAgentId?._id && transaction.listingAgentId?.isActive === false) || (agent.agentId === transaction.sellingAgentId?._id && transaction.sellingAgentId?.isActive === false)" class="ml-2 text-[10px] font-bold text-red-500 uppercase tracking-wider bg-red-100 dark:bg-red-900/30 px-1.5 py-0.5 rounded"> Deleted </span>
               </p>
               <p class="text-xs capitalize transition-colors text-slate-500 dark:text-slate-400">{{ agent.role }} Agent</p>
             </div>
@@ -110,7 +112,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from "vue";
+import { ref, onMounted, onUnmounted, computed } from "vue";
 import { useRoute } from "vue-router";
 import { useTransactionStore } from "../../../stores/useTransactionStore";
 import { TransactionStatus } from "../../../types";
@@ -127,6 +129,10 @@ const cancelReason = ref("");
 onMounted(() => {
   const id = route.params.id as string;
   store.loadTransactionById(id);
+});
+
+onUnmounted(() => {
+  store.clearSelectedTransaction();
 });
 
 const transaction = computed(() => store.selectedTransaction);

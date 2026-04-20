@@ -9,7 +9,7 @@ export class CreateTransactionDto {
   transactionType!: TransactionType;
 
   @IsNumber()
-  @Min(0)
+  @Min(1)
   totalServiceFee!: number;
 
   @IsMongoId()

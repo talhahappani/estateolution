@@ -17,12 +17,12 @@
       <form @submit.prevent="submitTransaction" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         <div class="col-span-1 md:col-span-2 lg:col-span-3">
           <label class="block text-sm font-medium transition-colors text-slate-700 dark:text-slate-300">Property Title</label>
-          <input v-model="form.propertyTitle" required type="text" placeholder="e.g., Luxury Villa in Miami" class="mt-1 block w-full rounded-md shadow-sm sm:text-sm p-2 transition-colors bg-white border border-slate-300 text-slate-900 focus:border-teal-500 focus:ring-teal-500 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-500" />
+          <input v-model="form.propertyTitle" type="text" placeholder="e.g., Luxury Villa in London" class="mt-1 block w-full rounded-md shadow-sm sm:text-sm p-2 transition-colors bg-white border border-slate-300 text-slate-900 focus:border-teal-500 focus:ring-teal-500 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-500" />
         </div>
 
         <div>
           <label class="block text-sm font-medium transition-colors text-slate-700 dark:text-slate-300">Transaction Type</label>
-          <select v-model="form.transactionType" required class="mt-1 block w-full rounded-md shadow-sm sm:text-sm p-2 transition-colors bg-white border border-slate-300 text-slate-900 focus:border-teal-500 focus:ring-teal-500 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100">
+          <select v-model="form.transactionType" class="mt-1 block w-full rounded-md shadow-sm sm:text-sm p-2 transition-colors bg-white border border-slate-300 text-slate-900 focus:border-teal-500 focus:ring-teal-500 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100">
             <option value="sale">Sale</option>
             <option value="rental">Rental</option>
           </select>
@@ -30,12 +30,12 @@
 
         <div>
           <label class="block text-sm font-medium transition-colors text-slate-700 dark:text-slate-300">Total Service Fee (£)</label>
-          <input v-model.number="form.totalServiceFee" required type="number" min="0" class="mt-1 block w-full rounded-md shadow-sm sm:text-sm p-2 transition-colors bg-white border border-slate-300 text-slate-900 focus:border-teal-500 focus:ring-teal-500 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100" />
+          <input v-model.number="form.totalServiceFee" type="number" min="0" class="mt-1 block w-full rounded-md shadow-sm sm:text-sm p-2 transition-colors bg-white border border-slate-300 text-slate-900 focus:border-teal-500 focus:ring-teal-500 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100" />
         </div>
 
         <div>
           <label class="block text-sm font-medium transition-colors text-slate-700 dark:text-slate-300">Listing Agent</label>
-          <select v-model="form.listingAgentId" required class="mt-1 block w-full rounded-md shadow-sm sm:text-sm p-2 transition-colors bg-white border border-slate-300 text-slate-900 focus:border-teal-500 focus:ring-teal-500 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100">
+          <select v-model="form.listingAgentId" class="mt-1 block w-full rounded-md shadow-sm sm:text-sm p-2 transition-colors bg-white border border-slate-300 text-slate-900 focus:border-teal-500 focus:ring-teal-500 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100">
             <option value="" disabled>Select an agent</option>
             <option v-for="agent in agentStore.agents" :key="agent._id" :value="agent._id">{{ agent.firstName }} {{ agent.lastName }}</option>
           </select>
@@ -43,7 +43,7 @@
 
         <div>
           <label class="block text-sm font-medium transition-colors text-slate-700 dark:text-slate-300">Selling Agent</label>
-          <select v-model="form.sellingAgentId" required class="mt-1 block w-full rounded-md shadow-sm sm:text-sm p-2 transition-colors bg-white border border-slate-300 text-slate-900 focus:border-teal-500 focus:ring-teal-500 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100">
+          <select v-model="form.sellingAgentId" class="mt-1 block w-full rounded-md shadow-sm sm:text-sm p-2 transition-colors bg-white border border-slate-300 text-slate-900 focus:border-teal-500 focus:ring-teal-500 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100">
             <option value="" disabled>Select an agent</option>
             <option v-for="agent in agentStore.agents" :key="agent._id" :value="agent._id">{{ agent.firstName }} {{ agent.lastName }}</option>
           </select>
@@ -289,6 +289,20 @@ onMounted(() => {
 });
 
 const submitTransaction = async () => {
+  if (!form.value.propertyTitle.trim()) {
+    toast.warning("Property title cannot be empty.");
+    return;
+  }
+
+  if (form.value.totalServiceFee <= 0) {
+    toast.warning("Total Service Fee must be greater than £0.");
+    return;
+  }
+
+  if (!form.value.listingAgentId || !form.value.sellingAgentId) {
+    toast.warning("Please select both Listing and Selling agents.");
+    return;
+  }
   try {
     await store.createNewTransaction({ ...form.value });
     isCreating.value = false; // Hide form on success

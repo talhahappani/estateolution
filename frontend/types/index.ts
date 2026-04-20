@@ -18,6 +18,7 @@ export interface Agent {
   firstName: string;
   lastName: string;
   email: string;
+  isActive?: boolean;
 }
 
 export interface StageHistory {
