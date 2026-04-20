@@ -14,6 +14,8 @@ export const useTransactionStore = defineStore("transaction", () => {
   const error = ref<string | null>(null);
   const stats = ref<TransactionStats | null>(null);
   const agentPerformance = ref<any[]>([]);
+  const searchQuery = ref("");
+  const statusFilter = ref("");
 
   // Actions
   const loadStats = async () => {
@@ -36,7 +38,7 @@ export const useTransactionStore = defineStore("transaction", () => {
     isLoading.value = true;
     error.value = null;
     try {
-      const response = await api.fetchTransactions(page, 10);
+      const response = await api.fetchTransactions(page, 10, searchQuery.value, statusFilter.value);
       transactions.value = response.data;
       paginationMeta.value = {
         page: response.page,
@@ -49,6 +51,10 @@ export const useTransactionStore = defineStore("transaction", () => {
     } finally {
       isLoading.value = false;
     }
+  };
+
+  const applyFilters = () => {
+    loadTransactions(1);
   };
 
   const loadTransactionById = async (id: string) => {
@@ -100,6 +106,8 @@ export const useTransactionStore = defineStore("transaction", () => {
     selectedTransaction,
     stats,
     agentPerformance,
+    searchQuery,
+    statusFilter,
     isLoading,
     error,
     loadTransactions,
@@ -108,5 +116,6 @@ export const useTransactionStore = defineStore("transaction", () => {
     changeStage,
     createNewTransaction,
     cancelTx,
+    applyFilters,
   };
 });

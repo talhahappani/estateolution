@@ -101,42 +101,93 @@
       </div>
     </div>
 
+    <!-- Search & Filter Toolbar -->
+    <div class="mb-4 flex flex-col sm:flex-row gap-4 justify-between items-center bg-white p-4 rounded-lg shadow-sm border transition-colors border-slate-200 dark:bg-slate-900 dark:border-slate-800">
+      <div class="flex flex-1 w-full gap-4 md:flex-row flex-col">
+        <!-- Search Input -->
+        <input v-model="store.searchQuery" @keyup.enter="store.applyFilters()" type="text" placeholder="Search by property title..." class="flex-1 rounded-md shadow-sm sm:text-sm p-2 transition-colors bg-white border border-slate-300 text-slate-900 focus:border-teal-500 focus:ring-teal-500 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100 dark:placeholder-slate-500" />
+
+        <!-- Status Filter -->
+        <select v-model="store.statusFilter" @change="store.applyFilters()" class="w-48 rounded-md shadow-sm sm:text-sm p-2 transition-colors bg-white border border-slate-300 text-slate-900 focus:border-teal-500 focus:ring-teal-500 dark:bg-slate-950 dark:border-slate-700 dark:text-slate-100">
+          <option value="">All Statuses</option>
+          <option value="agreement">Agreement</option>
+          <option value="earnest_money">Earnest Money</option>
+          <option value="title_deed">Title Deed</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+
+      <button @click="store.applyFilters()" class="w-full sm:w-auto px-4 py-2 rounded-md transition-colors text-white bg-slate-800 hover:bg-slate-900 dark:bg-slate-700 dark:hover:bg-slate-600">Search</button>
+    </div>
+
     <!-- Mobile cards -->
     <div class="md:hidden space-y-3">
-      <div v-for="transaction in store.transactions" :key="transaction._id" class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-        <div class="flex items-start justify-between gap-3">
-          <div>
-            <div class="font-medium text-slate-900 dark:text-slate-100">
-              {{ transaction.propertyTitle }}
+      <template v-if="store.isLoading">
+        <div v-for="i in 5" :key="'mobile-skeleton-' + i" class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900 animate-pulse">
+          <div class="flex items-start justify-between gap-3">
+            <div class="flex-1">
+              <div class="h-4 w-3/4 rounded bg-slate-200 dark:bg-slate-700"></div>
+              <div class="mt-2 h-3 w-1/2 rounded bg-slate-200 dark:bg-slate-700"></div>
             </div>
-            <div class="mt-1 text-sm text-slate-500 dark:text-slate-400">
-              {{ new Date(transaction.updatedAt).toLocaleDateString("en-GB") }}
+            <div class="h-6 w-16 rounded-full bg-slate-200 dark:bg-slate-700"></div>
+          </div>
+
+          <div class="mt-4 space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="h-3 w-10 rounded bg-slate-200 dark:bg-slate-700"></div>
+              <div class="h-4 w-24 rounded bg-slate-200 dark:bg-slate-700"></div>
+            </div>
+            <div class="flex items-center justify-between">
+              <div class="h-3 w-10 rounded bg-slate-200 dark:bg-slate-700"></div>
+              <div class="h-6 w-20 rounded-full bg-slate-200 dark:bg-slate-700"></div>
             </div>
           </div>
 
-          <span class="px-2 py-1 text-xs font-semibold rounded-full capitalize" :class="transaction.transactionType === 'sale' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400'">
-            {{ transaction.transactionType }}
-          </span>
+          <div class="mt-4 text-right">
+            <div class="ml-auto h-4 w-20 rounded bg-slate-200 dark:bg-slate-700"></div>
+          </div>
         </div>
+      </template>
 
-        <div class="mt-3 flex items-center justify-between text-sm">
-          <span class="text-slate-500 dark:text-slate-400">Fee</span>
-          <span class="font-medium text-slate-900 dark:text-slate-100">
-            {{ transaction.totalServiceFee.toLocaleString("en-GB", { style: "currency", currency: "GBP" }) }}
-          </span>
-        </div>
+      <template v-else>
+        <div v-if="store.transactions.length === 0" class="rounded-lg border border-slate-200 bg-white p-4 text-center text-slate-500 shadow-sm dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">No transactions found.</div>
 
-        <div class="mt-3 flex items-center justify-between text-sm">
-          <span class="text-slate-500 dark:text-slate-400">Stage</span>
-          <span class="px-2 py-1 text-xs font-semibold rounded-full" :class="getStatusBadgeClass(transaction.status)">
-            {{ formatStage(transaction.status) }}
-          </span>
-        </div>
+        <div v-for="transaction in store.transactions" :key="transaction._id" class="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div class="flex items-start justify-between gap-3">
+            <div>
+              <div class="font-medium text-slate-900 dark:text-slate-100">
+                {{ transaction.propertyTitle }}
+              </div>
+              <div class="mt-1 text-sm text-slate-500 dark:text-slate-400">
+                {{ new Date(transaction.updatedAt).toLocaleDateString("en-GB") }}
+              </div>
+            </div>
 
-        <div class="mt-4 text-right">
-          <NuxtLink :to="`/transactions/${transaction._id}`" class="text-teal-600 hover:underline dark:text-teal-400"> Manage → </NuxtLink>
+            <span class="px-2 py-1 text-xs font-semibold rounded-full capitalize" :class="transaction.transactionType === 'sale' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400'">
+              {{ transaction.transactionType }}
+            </span>
+          </div>
+
+          <div class="mt-3 flex items-center justify-between text-sm">
+            <span class="text-slate-500 dark:text-slate-400">Fee</span>
+            <span class="font-medium text-slate-900 dark:text-slate-100">
+              {{ transaction.totalServiceFee.toLocaleString("en-GB", { style: "currency", currency: "GBP" }) }}
+            </span>
+          </div>
+
+          <div class="mt-3 flex items-center justify-between text-sm">
+            <span class="text-slate-500 dark:text-slate-400">Stage</span>
+            <span class="px-2 py-1 text-xs font-semibold rounded-full" :class="getStatusBadgeClass(transaction.status)">
+              {{ formatStage(transaction.status) }}
+            </span>
+          </div>
+
+          <div class="mt-4 text-right">
+            <NuxtLink :to="`/transactions/${transaction._id}`" class="text-teal-600 hover:underline dark:text-teal-400"> Manage → </NuxtLink>
+          </div>
         </div>
-      </div>
+      </template>
     </div>
 
     <!-- Desktop table -->
@@ -153,44 +204,59 @@
           </tr>
         </thead>
         <tbody class="divide-y transition-colors divide-slate-200 dark:divide-slate-800">
-          <tr v-if="store.transactions.length === 0">
-            <td colspan="6" class="px-6 py-8 text-center transition-colors text-slate-500 dark:text-slate-400">No transactions found.</td>
-          </tr>
-          <tr v-for="transaction in store.transactions" :key="transaction._id" class="transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50">
-            <td class="px-6 py-4 whitespace-nowrap">
-              <div class="font-medium transition-colors text-slate-900 dark:text-slate-100">{{ transaction.propertyTitle }}</div>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full capitalize" :class="transaction.transactionType === 'sale' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400'">
-                {{ transaction.transactionType }}
-              </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm transition-colors text-slate-500 dark:text-slate-400">
-              {{ new Date(transaction.updatedAt).toLocaleDateString("en-GB") }}
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-sm transition-colors text-slate-500 dark:text-slate-400">{{ transaction.totalServiceFee.toLocaleString("en-GB", { style: "currency", currency: "GBP" }) }}</td>
-            <td class="px-6 py-4 whitespace-nowrap">
-              <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="getStatusBadgeClass(transaction.status)">
-                {{ formatStage(transaction.status) }}
-              </span>
-            </td>
-            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-              <NuxtLink :to="`/transactions/${transaction._id}`" class="transition-colors hover:underline text-teal-600 dark:text-teal-400 dark:hover:text-teal-300"> Manage &rarr; </NuxtLink>
-            </td>
-          </tr>
+          <!-- Skeleton Loader (Shows when loading) -->
+          <template v-if="store.isLoading">
+            <tr v-for="i in 5" :key="'skeleton-' + i" class="animate-pulse">
+              <td class="px-6 py-4 whitespace-nowrap"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-3/4"></div></td>
+              <td class="px-6 py-4 whitespace-nowrap"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded-full w-16"></div></td>
+              <td class="px-6 py-4 whitespace-nowrap"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-1/2"></div></td>
+              <td class="px-6 py-4 whitespace-nowrap"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-24"></div></td>
+              <td class="px-6 py-4 whitespace-nowrap"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded-full w-20"></div></td>
+              <td class="px-6 py-4 whitespace-nowrap text-right"><div class="h-4 bg-slate-200 dark:bg-slate-700 rounded w-12 ml-auto"></div></td>
+            </tr>
+          </template>
+
+          <template v-else>
+            <tr v-if="store.transactions.length === 0">
+              <td colspan="6" class="px-6 py-8 text-center transition-colors text-slate-500 dark:text-slate-400">No transactions found.</td>
+            </tr>
+            <tr v-for="transaction in store.transactions" :key="transaction._id" class="transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/50">
+              <td class="px-6 py-4 whitespace-nowrap">
+                <div class="font-medium transition-colors text-slate-900 dark:text-slate-100">{{ transaction.propertyTitle }}</div>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full capitalize" :class="transaction.transactionType === 'sale' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400' : 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-400'">
+                  {{ transaction.transactionType }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm transition-colors text-slate-500 dark:text-slate-400">
+                {{ new Date(transaction.updatedAt).toLocaleDateString("en-GB") }}
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-sm transition-colors text-slate-500 dark:text-slate-400">{{ transaction.totalServiceFee.toLocaleString("en-GB", { style: "currency", currency: "GBP" }) }}</td>
+              <td class="px-6 py-4 whitespace-nowrap">
+                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full" :class="getStatusBadgeClass(transaction.status)">
+                  {{ formatStage(transaction.status) }}
+                </span>
+              </td>
+              <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                <NuxtLink :to="`/transactions/${transaction._id}`" class="transition-colors hover:underline text-teal-600 dark:text-teal-400 dark:hover:text-teal-300"> Manage &rarr; </NuxtLink>
+              </td>
+            </tr>
+          </template>
         </tbody>
       </table>
     </div>
     <!-- Pagination Controls -->
-    <div v-if="store.paginationMeta.totalPages > 1" class="px-6 py-4 flex items-center justify-between border-t transition-colors border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
+    <div class="min-h-[72px] px-6 py-4 flex items-center justify-between border-t transition-colors border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50">
       <div class="text-sm transition-colors text-slate-500 dark:text-slate-400">
         Showing page <span class="font-medium text-slate-900 dark:text-slate-100">{{ store.paginationMeta.page }}</span> of
         <span class="font-medium text-slate-900 dark:text-slate-100">{{ store.paginationMeta.totalPages }}</span>
         ({{ store.paginationMeta.total }} total deals)
       </div>
-      <div class="flex space-x-2">
-        <button @click="store.loadTransactions(store.paginationMeta.page - 1)" :disabled="store.paginationMeta.page === 1" class="px-3 py-1 border rounded transition-colors text-sm font-medium bg-white border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-700">Previous</button>
-        <button @click="store.loadTransactions(store.paginationMeta.page + 1)" :disabled="store.paginationMeta.page === store.paginationMeta.totalPages" class="px-3 py-1 border rounded transition-colors text-sm font-medium bg-white border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-700">Next</button>
+
+      <div class="flex space-x-2" :class="store.isLoading ? 'opacity-50 pointer-events-none' : ''">
+        <button @click="store.loadTransactions(store.paginationMeta.page - 1)" :disabled="store.isLoading || store.paginationMeta.page === 1" class="px-3 py-1 border rounded transition-colors text-sm font-medium bg-white border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-700">Previous</button>
+        <button @click="store.loadTransactions(store.paginationMeta.page + 1)" :disabled="store.isLoading || store.paginationMeta.page === store.paginationMeta.totalPages" class="px-3 py-1 border rounded transition-colors text-sm font-medium bg-white border-slate-300 text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-300 dark:hover:bg-slate-700">Next</button>
       </div>
     </div>
   </div>

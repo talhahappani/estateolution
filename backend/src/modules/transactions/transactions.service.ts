@@ -41,18 +41,35 @@ export class TransactionsService {
     return newTransaction.save();
   }
 
-  async findAll(page: number = 1, limit: number = 10) {
+  async findAll(
+    page: number = 1,
+    limit: number = 10,
+    search?: string,
+    status?: string,
+  ) {
     const skip = (page - 1) * limit;
 
+    // Build the query object dynamically
+    const query: Record<string, unknown> = {};
+
+    if (search) {
+      // Case-insensitive search on property title
+      query.propertyTitle = { $regex: search, $options: 'i' };
+    }
+
+    if (status) {
+      query.status = status;
+    }
+
     const data = await this.transactionModel
-      .find()
+      .find(query)
       .populate('listingAgentId sellingAgentId')
       .sort({ updatedAt: -1 })
       .skip(skip)
       .limit(limit)
       .exec();
 
-    const total = await this.transactionModel.countDocuments();
+    const total = await this.transactionModel.countDocuments(query);
 
     return {
       data,

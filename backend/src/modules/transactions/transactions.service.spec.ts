@@ -29,6 +29,13 @@ describe('TransactionsService', () => {
     save: mockSave,
   };
 
+  // Mocking Mongoose chainable methods (find -> populate -> sort -> skip -> limit -> exec)
+  const mockExec = jest.fn().mockResolvedValue([mockTransactionDoc]);
+  const mockLimit = jest.fn().mockReturnValue({ exec: mockExec });
+  const mockSkip = jest.fn().mockReturnValue({ limit: mockLimit });
+  const mockSort = jest.fn().mockReturnValue({ skip: mockSkip });
+  const mockPopulate = jest.fn().mockReturnValue({ sort: mockSort });
+
   // Mocking the Mongoose Model
   const mockTransactionModel = {
     findById: jest.fn().mockReturnValue({
@@ -36,6 +43,11 @@ describe('TransactionsService', () => {
         exec: jest.fn().mockResolvedValue(mockTransactionDoc),
       }),
     }),
+    find: jest.fn().mockReturnValue({
+      populate: mockPopulate,
+    }),
+    countDocuments: jest.fn().mockResolvedValue(1),
+    aggregate: jest.fn().mockResolvedValue([]),
   };
 
   beforeEach(async () => {
@@ -120,6 +132,60 @@ describe('TransactionsService', () => {
       await expect(
         service.cancelTransaction('some-id', 'Too late to cancel'),
       ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('findAll (Pagination & Filtering)', () => {
+    it('should return paginated transactions and apply regex search', async () => {
+      const result = await service.findAll(
+        1,
+        10,
+        'Villa',
+        TransactionStatus.AGREEMENT,
+      );
+
+      expect(mockTransactionModel.find).toHaveBeenCalledWith({
+        propertyTitle: { $regex: 'Villa', $options: 'i' },
+        status: TransactionStatus.AGREEMENT,
+      });
+      expect(result.data).toBeDefined();
+      expect(result.total).toBe(1);
+      expect(result.page).toBe(1);
+    });
+  });
+
+  describe('getStats (Aggregation)', () => {
+    it('should return system statistics correctly', async () => {
+      // Mock the aggregation response
+      mockTransactionModel.aggregate.mockResolvedValueOnce([
+        { totalEarnings: 25000 },
+      ]);
+      mockTransactionModel.countDocuments
+        .mockResolvedValueOnce(10) // total
+        .mockResolvedValueOnce(5) // completed
+        .mockResolvedValueOnce(2); // cancelled
+
+      const stats = await service.getStats();
+
+      expect(stats.totalTransactions).toBe(10);
+      expect(stats.completedTransactions).toBe(5);
+      expect(stats.cancelledTransactions).toBe(2);
+      expect(stats.totalAgencyEarnings).toBe(25000);
+      expect(mockTransactionModel.aggregate).toHaveBeenCalled();
+    });
+  });
+
+  describe('getAgentPerformance (Aggregation)', () => {
+    it('should execute the aggregation pipeline for agent leaderboard', async () => {
+      const mockPerformanceData = [
+        { agentName: 'John Doe', totalEarnings: 5000, completedDeals: 2 },
+      ];
+      mockTransactionModel.aggregate.mockResolvedValueOnce(mockPerformanceData);
+
+      const result = await service.getAgentPerformance();
+
+      expect(mockTransactionModel.aggregate).toHaveBeenCalled();
+      expect(result).toEqual(mockPerformanceData);
     });
   });
 });

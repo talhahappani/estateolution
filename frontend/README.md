@@ -40,7 +40,3 @@ npm run dev
 ```
 
 The application will be accessible at `http://localhost:3001`. (Port 3001 is explicitly configured in `nuxt.config.ts` to prevent port conflicts with the backend).
-
-```
-
-```

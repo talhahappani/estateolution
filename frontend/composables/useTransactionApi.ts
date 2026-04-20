@@ -5,8 +5,15 @@ export const useTransactionApi = () => {
   const baseURL = config.public.apiBase;
 
   // Fetch all transactions
-  const fetchTransactions = async (page: number = 1, limit: number = 10): Promise<PaginatedTransactions> => {
-    return await $fetch<PaginatedTransactions>(`/transactions?page=${page}&limit=${limit}`, { baseURL });
+  const fetchTransactions = async (page: number = 1, limit: number = 10, search: string = "", status: string = ""): Promise<PaginatedTransactions> => {
+    const query = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+      ...(search && { search }),
+      ...(status && { status }),
+    }).toString();
+
+    return await $fetch<PaginatedTransactions>(`/transactions?${query}`, { baseURL });
   };
 
   // Fetch a single transaction by ID
