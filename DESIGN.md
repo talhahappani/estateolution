@@ -14,9 +14,11 @@ This project is a full-stack system designed to manage the lifecycle of real est
 
 - **Embedded Financial Breakdown:** The commission reports are embedded directly into the `Transaction` document as a `financialBreakdown` object.
   - _Why Embedded, Not Dynamic?_ Computing commissions dynamically on-the-fly is a financial anti-pattern. If the agency's commission policy changes in the future, calculating dynamically would alter the historical data of past transactions. Embedding acts as an immutable snapshot.
+  - _Why not a Dedicated Collection?_ In MongoDB (NoSQL), "data accessed together should be stored together." The financial breakdown has a strict 1-to-1 relationship with a completed transaction. Separating it into a dedicated collection would require unnecessary `$lookup` (JOIN) operations for every read. Embedding guarantees a fast, single-document read operation.
 - **Traceability (`stageHistory`):** A history array is kept inside the transaction document to track _when_ the transaction entered a specific stage. This explicitly fulfills the "Ensures traceability" requirement and is visualized as a Timeline UI on the frontend.
 - **Pagination & Sorting:** Transactions are sorted by `updatedAt` (Last Updated) by default, which is the industry standard for CRM dashboards. Server-side pagination is implemented to ensure the application remains performant as the dataset grows.
 - **Transaction Types:** Distinguished via `transactionType` (`sale` vs. `rental`) to allow future analytical queries.
+- **Soft Delete Pattern:** Agents are never hard-deleted from the database. Instead, an `isActive` flag is toggled. This ensures that past completed transactions linked to a deleted agent never crash the UI and financial historical data remains fully intact. A Partial Unique Index ensures new agents can register with a previously "deleted" email.
 
 ## 4. State Machine & Transition Rules
 
@@ -27,12 +29,21 @@ This project is a full-stack system designed to manage the lifecycle of real est
   - `title_deed` -> `completed`
 - _Edge Case (Cancellations):_ A `cancelled` state is supported. Any state (except `completed`) can transition to `cancelled` along with a mandatory cancellation reason.
 
-## 5. Business Intelligence & MongoDB Aggregations
+## 5. API Design & Business Intelligence
 
-To provide actionable insights without overloading the frontend or running expensive loops in Node.js, the system utilizes **MongoDB Aggregation Pipelines**.
+The application strictly follows RESTful API design principles, separated into distinct domain modules:
+
+**Core Domains:**
+
+- **`GET, POST, DELETE /agents`:** Manages agent records (integrates Soft Delete logic).
+- **`GET, POST /transactions`:** Handles creation and paginated, searchable retrieval of transactions.
+- **`PATCH /transactions/:id/stage` & `/cancel`:** Dedicated endpoints for strictly validating and processing state machine transitions.
+
+**Advanced Aggregations (Business Intelligence):**
+To provide actionable insights without overloading the frontend or running expensive loops in Node.js, the system utilizes powerful MongoDB Aggregation Pipelines:
 
 - **`GET /transactions/stats`:** Calculates total deals, completed/cancelled ratios, and sums up the total agency earnings natively within the database.
-- **`GET /transactions/agent-performance`:** Uses a complex pipeline (`$match`, `$unwind`, `$group`, `$lookup`, `$project`) to flatten the embedded financial breakdowns, join them with the Agents collection, and calculate a leaderboard of top-performing agents based on their total earnings and completed deal count.
+- **`GET /transactions/agent-performance`:** Uses a complex pipeline (`$match`, `$unwind`, `$group`, `$lookup`, `$project`) to flatten the embedded financial breakdowns, join them with the active Agents collection, and calculate a leaderboard of top-performing agents based on their total earnings and completed deal count.
 
 ## 6. Commission Calculation Rules (Core Business Logic)
 
